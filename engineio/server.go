@@ -144,7 +144,7 @@ func (s *Server) newSession(ctx context.Context, conn transport.Conn, reqTranspo
 		Upgrades:     s.transports.UpgradeFrom(reqTransport),
 	}
 
-	newSession, err := session.New(conn, s.sessions.NewID(), reqTransport, params)
+	newSession, err := session.New(s.sessions, conn, s.sessions.NewID(), reqTransport, params)
 	if err != nil {
 		return nil, err
 	}

@@ -28,15 +28,18 @@ type Session struct {
 	context interface{}
 
 	upgradeLocker sync.RWMutex
+	closeOnce     sync.Once
+	manager       *Manager
 }
 
-func New(conn transport.Conn, sid, transport string, params transport.ConnParameters) (*Session, error) {
+func New(manager *Manager, conn transport.Conn, sid, transport string, params transport.ConnParameters) (*Session, error) {
 	params.SID = sid
 
 	ses := &Session{
 		transport: transport,
 		conn:      conn,
 		params:    params,
+		manager:   manager,
 	}
 
 	if err := ses.setDeadline(); err != nil {
@@ -70,6 +73,9 @@ func (s *Session) Close() error {
 	s.upgradeLocker.RLock()
 	defer s.upgradeLocker.RUnlock()
 
+	s.closeOnce.Do(func() {
+		s.manager.Remove(s.params.SID)
+	})
 	return s.conn.Close()
 }
 
